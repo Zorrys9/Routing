@@ -38,6 +38,8 @@ namespace RoutingApp
 
             var routeBuilder = new RouteBuilder(app, RouteHandler);
 
+            routeBuilder.Routes.Add(new ManagerRoute());
+
             routeBuilder.MapRoute(
                 name:"myMap",
                 template:"{personList:position:regex(^*.list.*)}/{person}/{name}-age{age}/{id?}",
