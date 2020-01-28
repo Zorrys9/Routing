@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -26,46 +27,36 @@ namespace RoutingApp
             {
                 app.UseDeveloperExceptionPage();
             }
-            app.UseRouting();
 
-            app.Use(async (context, next) =>
-            {
-                Endpoint endpoint = context.GetEndpoint();
+            var routeBuilder = new RouteBuilder(app);
 
-                if (endpoint != null)
+            //routeBuilder.MapRoute("{list=personList}/{person}/{name}/{id?}/{*otherRequest}", async context=> 
+            //{
+            //    await context.Response.WriteAsync($"hello {context.Request.RouteValues["name"]}");
+            //});
+
+            routeBuilder.MapMiddlewareGet("{list=personList}/{person}/{name}/{id?}/{*otherrRequest}", app=> {
+                app.Use(async (context, next) =>
                 {
-
-                    var routePattern = (endpoint as Microsoft.AspNetCore.Routing.RouteEndpoint)?.RoutePattern.RawText;
-
-                    Debug.WriteLine($"Endpoint name: {endpoint.DisplayName}");
-                    Debug.WriteLine($"Route pattern: {routePattern}");
-
-                    await next.Invoke();
-
-                }
-                else
+                    if (context.Request.RouteValues["name"] != null)
+                        await next.Invoke();
+                    else
+                        await context.Response.WriteAsync("Hello world");
+                });
+                app.Run(async context =>
                 {
-                    Debug.WriteLine("Endpoints is null");
-
-                    await context.Response.WriteAsync("Endpoints is not defined");
-                }
-
+                    await context.Response.WriteAsync($"name this person is {context.Request.RouteValues["name"]}");
+                });
             });
 
-            app.UseEndpoints(endpoints =>
+            app.UseRouter(routeBuilder.Build());
+
+            app.Run(async context =>
             {
-                endpoints.MapGet("/index", async context =>
-                {
-                    await context.Response.WriteAsync("Hello Index");
-                });
-
-                endpoints.MapGet("/", async context =>
-                {
                     await context.Response.WriteAsync("hello world");
-                });
-
             });
 
         }
+
     }
 }
